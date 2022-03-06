@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Table, Container, Row, Col, Button, ButtonGroup, Form } from 'react-bootstrap';
 import { toast } from 'react-toastify';
 import { useDispatch, useSelector } from "react-redux";
-import { loadUsers, addUser } from "./redux/action";
+import { loadUsers, addUser, deleteUser, loadSingleUser, updateUser } from "./redux/action";
 
 const initialState = {
     name: "",
@@ -13,8 +13,10 @@ const initialState = {
 
 const Home = () => {
     const [info, setInfo] = useState(initialState)
+    const [updateActive, setUpdateActive] = useState(false)
+    const [userId, setUserId] = useState("")
     const dispatch = useDispatch();
-    const { users, msg } = useSelector(state => state.data);
+    const { users, msg, user } = useSelector(state => state.data);
 
     const {name, email, city, state} = info;
 
@@ -28,6 +30,12 @@ const Home = () => {
         }
     }, [msg]);
 
+    useEffect(() => {
+        if(user) {
+            setInfo({...user})
+        }
+    }, [user])
+
     const handleChange = (e) => {
         let {name, value} = e.target;
         setInfo({...info, [name]: value});
@@ -35,9 +43,33 @@ const Home = () => {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        dispatch(addUser(info))
-        setInfo(initialState)
+
+        if(!name || !email || !city || !state) {
+            toast.error("Please fill all input fields")
+        } else {
+            if(!updateActive) {
+                dispatch(addUser(info))
+            } else {
+                dispatch(updateUser(info, userId))
+                setUpdateActive(false)
+                setUserId("")
+            }
+
+            setInfo(initialState)
+        }
     };
+
+    const handleDelete = (user) => {
+        if(window.confirm(`Are you sure you want to delete ${user.name}?`)) {
+           dispatch(deleteUser(user._id)) ;
+        }
+    }
+
+    const handleUpdate = (id) => {
+        dispatch(loadSingleUser(id));
+        setUpdateActive(true)
+        setUserId(id)
+    }
 
     return (
         <div>
@@ -51,7 +83,7 @@ const Home = () => {
                             type="text"
                             placeholder="Name"
                             name="name"
-                            value={name}
+                            value={name || ""}
                             onChange={handleChange}
                             />
                         </Form.Group>
@@ -61,7 +93,7 @@ const Home = () => {
                             type="text"
                             placeholder="E-mail"
                             name="email"
-                            value={email}
+                            value={email || ""}
                             onChange={handleChange}
                             />
                         </Form.Group>
@@ -71,7 +103,7 @@ const Home = () => {
                             type="text"
                             placeholder="City"
                             name="city"
-                            value={city}
+                            value={city || ""}
                             onChange={handleChange}
                             />
                         </Form.Group>
@@ -81,7 +113,7 @@ const Home = () => {
                             type="text"
                             placeholder="State"
                             name="state"
-                            value={state}
+                            value={state || ""}
                             onChange={handleChange}
                             />
                         </Form.Group>
@@ -91,7 +123,7 @@ const Home = () => {
                             variant="primary"
                             size="lg"
                             >
-                                Submit
+                                {updateActive ? "Update" : "Submit"}
                             </Button>
                         </div>
                         </Form>
@@ -108,20 +140,27 @@ const Home = () => {
                                     <th>Actions</th>
                                 </tr>
                             </thead>
-                            {users && users.map((item, index) => (
+                            {users && users.map((user, index) => (
                                 <tbody key={index}>
                                     <tr>
                                         <td>{index + 1}</td>
-                                        <td>{item.name}</td>
-                                        <td>{item.email}</td>
-                                        <td>{item.city}</td>
-                                        <td>{item.state}</td>
+                                        <td>{user.name}</td>
+                                        <td>{user.email}</td>
+                                        <td>{user.city}</td>
+                                        <td>{user.state}</td>
                                         <td>
                                             <ButtonGroup>
-                                                <Button style={{marginRight: "5px"}} variant="danger">
+                                                <Button 
+                                                style={{marginRight: "5px"}} 
+                                                variant="danger"
+                                                onClick={() => handleDelete(user)}
+                                                >
                                                     Delete
                                                 </Button>
-                                                <Button variant="secondary">
+                                                <Button 
+                                                variant="secondary"
+                                                onClick={() => handleUpdate(user._id)}
+                                                >
                                                     Update
                                                 </Button>
                                             </ButtonGroup>
