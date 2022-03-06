@@ -16,6 +16,7 @@ db = mongo.db.users
 
 @app.route('/user', methods=['POST'])
 def create_user():
+    print(request.json)
     id = db.insert_one({
         'name': request.json['name'],
         'email': request.json['email'],

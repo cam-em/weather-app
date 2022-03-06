@@ -13,6 +13,11 @@ const userReducer = (state = initialState, action) => {
                 ...state,
                 users: action.payload
             }
+        case types.ADD_USER:
+            return {
+                ...state,
+                msg: action.payload
+            }
         default:
             return state;
     }
